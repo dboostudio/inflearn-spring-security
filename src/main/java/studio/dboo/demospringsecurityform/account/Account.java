@@ -1,6 +1,7 @@
 package studio.dboo.demospringsecurityform.account;
 
 import lombok.Data;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -21,7 +22,8 @@ public class Account {
     private String password;
     private String role;
 
-    public void encodePassword() {
-        this.password = "{noop}"+this.password;
+    public void encodePassword(PasswordEncoder passwordEncoder) {
+        this.password = passwordEncoder.encode(this.password);
     }
+
 }
