@@ -28,7 +28,7 @@ public class SampleController {
         model.addAttribute("message", "dashboard");
         return "dashboard";
     }
-    @GetMapping("admin/")
+    @GetMapping("/admin")
     public String admin(Model model, Principal principal){
         model.addAttribute("message", "admin");
         return "admin";
