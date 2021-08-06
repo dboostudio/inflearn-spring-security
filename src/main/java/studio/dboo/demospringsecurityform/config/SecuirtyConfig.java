@@ -38,6 +38,16 @@ public class SecuirtyConfig extends WebSecurityConfigurerAdapter {
         return new AffirmativeBased(voters);
     }
 
+    public SecurityExpressionHandler expressionHandler() {
+        RoleHierarchyImpl roleHierarchy = new RoleHierarchyImpl();
+        roleHierarchy.setHierarchy("ROLE_ADMIN > ROLE_USER"); // ROLE_USER의 권한보다 ROLE_ADMIN이 상위권한이다.
+
+        DefaultWebSecurityExpressionHandler handler = new DefaultWebSecurityExpressionHandler(); //Voter에 넣을 핸들러
+        handler.setRoleHierarchy(roleHierarchy); // 핸들러에 RoleHierarchy를 설정
+
+        return handler;
+    }
+
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.authorizeRequests()
@@ -45,7 +55,7 @@ public class SecuirtyConfig extends WebSecurityConfigurerAdapter {
                 .mvcMatchers("admin").hasRole("ADMIN")
                 .mvcMatchers("user").hasRole("USER")
                 .anyRequest().authenticated()
-        .accessDecisionManager(accessDecisionManager());
+        .expressionHandler(expressionHandler());
         http.formLogin();
         http.httpBasic();
     }
