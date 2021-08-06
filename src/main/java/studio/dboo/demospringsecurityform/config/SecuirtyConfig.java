@@ -3,23 +3,50 @@ package studio.dboo.demospringsecurityform.config;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.security.access.AccessDecisionManager;
+import org.springframework.security.access.AccessDecisionVoter;
+import org.springframework.security.access.expression.SecurityExpressionHandler;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
+import org.springframework.security.access.vote.AffirmativeBased;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.userdetails.User;
+import org.springframework.security.web.FilterInvocation;
+import org.springframework.security.web.access.expression.DefaultWebSecurityExpressionHandler;
+import org.springframework.security.web.access.expression.WebExpressionVoter;
+
+import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
 @Order(Ordered.LOWEST_PRECEDENCE - 10)
 public class SecuirtyConfig extends WebSecurityConfigurerAdapter {
+
+    public AccessDecisionManager accessDecisionManager() {
+        RoleHierarchyImpl roleHierarchy = new RoleHierarchyImpl();
+        roleHierarchy.setHierarchy("ROLE_ADMIN > ROLE_USER"); // ROLE_USER의 권한보다 ROLE_ADMIN이 상위권한이다.
+
+        DefaultWebSecurityExpressionHandler handler = new DefaultWebSecurityExpressionHandler(); //Voter에 넣을 핸들러
+        handler.setRoleHierarchy(roleHierarchy); // 핸들러에 RoleHierarchy를 설정
+
+        WebExpressionVoter voter = new WebExpressionVoter(); // AccessDecisionManager에 넘겨줄 Voter
+        voter.setExpressionHandler(handler); //Voter에 handler설정
+        List<AccessDecisionVoter<? extends  Object>> voters = Arrays.asList(); //AccessDecisionManager에 넘겨줄 VoterList
+        return new AffirmativeBased(voters);
+    }
+
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.authorizeRequests()
-                .mvcMatchers("/", "/info", "/account/**").permitAll() // 루트(/)와 /info 경로의 접근은 모두 허용
-                .mvcMatchers("admin").hasRole("ADMIN") // admin은 ADMIN 권한이 있을때만 허용
-                .anyRequest().authenticated(); // 그외의 경로로 접근하는 경우 인증(로그인)을 해야 허용
-        http.formLogin(); // 폼 로그인을 할 것이다.
-        http.httpBasic(); //httpBasic도 적용할 것이다.
+                .mvcMatchers("/", "/info", "/account/**").permitAll()
+                .mvcMatchers("admin").hasRole("ADMIN")
+                .mvcMatchers("user").hasRole("USER")
+                .anyRequest().authenticated()
+        .accessDecisionManager(accessDecisionManager());
+        http.formLogin();
+        http.httpBasic();
     }
 }
